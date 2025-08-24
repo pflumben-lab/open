@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interaktiver AP1 Prüfungsguide - Fachinformatiker Systemintegration</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Chosen Palette: Warm Neutrals -->
+    <!-- Application Structure Plan: Eine vertikal scrollende Single-Page-Anwendung, die als interaktives Dashboard fungiert. Die Struktur gliedert sich in: 1. Hero-Sektion mit Countdown zur Prüfung, um Relevanz und Dringlichkeit zu schaffen. 2. Eine Prüfungsübersicht mit einem interaktiven Diagramm zur Notengewichtung und Schlüsselkennzahlen. 3. Ein Tab-basiertes System für die Kernthemen, um eine detaillierte, aber übersichtliche Exploration zu ermöglichen. 4. Eine klare Gegenüberstellung der Prüfungsänderungen ab 2025. 5. Ein Abschnitt zur Lernstrategie mit praktischen Tipps. Diese Struktur wandelt einen linearen Bericht in eine nicht-lineare, benutzergesteuerte Erfahrung um, die das Verständnis und die Navigation erheblich verbessert. -->
+    <!-- Visualization & Content Choices: 
+        - Prüfungs-Gewichtung -> Ziel: Vergleichen -> Donut Chart (Chart.js) -> Interaktion: Tooltips beim Hovern -> Begründung: Visualisiert sofort die 20/80-Aufteilung und ist ansprechender als reiner Text.
+        - Kernthemen -> Ziel: Organisieren -> Tab-Interface (HTML/JS) -> Interaktion: Klick zum Wechseln der Ansicht -> Begründung: Verhindert Informationsüberflutung und ermöglicht eine fokussierte Auseinandersetzung mit den Inhalten.
+        - Prüfungs-Änderungen -> Ziel: Vergleichen -> Zwei-Spalten-Layout (HTML/CSS) -> Interaktion: Statisch -> Begründung: Bietet einen klaren, direkten Vergleich für schnelles Erfassen der Neuerungen.
+        - Lernfelder-Zuordnung -> Ziel: Organisieren/Verbinden -> Flexbox-Diagramm (HTML/CSS) -> Interaktion: Keine -> Begründung: Stellt eine visuelle Verbindung zwischen den abstrakten Lernfeldern und den konkreten Prüfungsinhalten her. -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #F9FAFB; /* stone-50 */
+            color: #374151; /* gray-700 */
+        }
+        .active-tab {
+            border-color: #3B82F6; /* blue-500 */
+            color: #3B82F6;
+            background-color: #EFF6FF; /* blue-50 */
+        }
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+        }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 400px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 300px;
+            max-height: 400px;
+        }
+        @media (min-width: 768px) {
+            .chart-container {
+                height: 350px;
+            }
+        }
+    </style>
+</head>
+<body class="antialiased">
+
+    <header class="bg-white shadow-sm">
+        <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8 text-center">
+            <h1 class="text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">Interaktiver AP1-Prüfungsguide</h1>
+            <p class="mt-2 text-lg text-gray-600">Fachinformatiker für Systemintegration (FISI)</p>
+        </div>
+    </header>
+
+    <main class="py-10">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+
+            <!-- Countdown Section -->
+            <section id="countdown" class="bg-blue-600 text-white rounded-lg p-8 mb-12 text-center shadow-lg">
+                <h2 class="text-2xl font-semibold mb-2">Prüfungstermin: 17. September 2025</h2>
+                <p class="text-blue-200 mb-4">Verbleibende Zeit bis zur Abschlussprüfung Teil 1</p>
+                <div id="timer" class="flex justify-center space-x-4 md:space-x-8 text-center">
+                    <div>
+                        <div id="days" class="text-4xl md:text-6xl font-bold">0</div>
+                        <div class="text-sm md:text-base text-blue-200">Tage</div>
+                    </div>
+                    <div>
+                        <div id="hours" class="text-4xl md:text-6xl font-bold">0</div>
+                        <div class="text-sm md:text-base text-blue-200">Stunden</div>
+                    </div>
+                    <div>
+                        <div id="minutes" class="text-4xl md:text-6xl font-bold">0</div>
+                        <div class="text-sm md:text-base text-blue-200">Minuten</div>
+                    </div>
+                    <div>
+                        <div id="seconds" class="text-4xl md:text-6xl font-bold">0</div>
+                        <div class="text-sm md:text-base text-blue-200">Sekunden</div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Overview Section -->
+            <section id="overview" class="mb-12">
+                <h2 class="text-2xl font-bold text-gray-900 mb-6 text-center">Die Prüfung im Überblick</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
+                    <div class="bg-white p-6 rounded-lg shadow-md">
+                        <h3 class="text-xl font-semibold text-gray-800 mb-4 text-center">Gewichtung der Noten</h3>
+                        <p class="text-gray-600 mb-4 text-center">Die AP1 ist der erste Teil der gestreckten Abschlussprüfung und macht 20% Ihrer Gesamtnote aus. Eine gute Leistung hier legt den Grundstein für Ihren Erfolg.</p>
+                        <div class="chart-container">
+                            <canvas id="gradeWeightChart"></canvas>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="bg-white p-6 rounded-lg shadow-md text-center">
+                            <span class="text-4xl font-bold text-blue-600">90</span>
+                            <p class="text-gray-600 mt-2">Minuten Prüfungszeit</p>
+                        </div>
+                        <div class="bg-white p-6 rounded-lg shadow-md text-center">
+                            <span class="text-4xl font-bold text-blue-600">20%</span>
+                            <p class="text-gray-600 mt-2">der Gesamtnote</p>
+                        </div>
+                        <div class="bg-white p-6 rounded-lg shadow-md text-center">
+                            <span class="text-4xl font-bold text-blue-600">4</span>
+                            <p class="text-gray-600 mt-2">ungebundene Aufgaben</p>
+                        </div>
+                        <div class="bg-white p-6 rounded-lg shadow-md text-center">
+                             <span class="text-2xl font-bold text-blue-600 leading-tight">Identisch</span>
+                            <p class="text-gray-600 mt-2">für alle IT-Berufe</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Core Topics Section -->
+            <section id="core-topics" class="mb-12">
+                <h2 class="text-2xl font-bold text-gray-900 mb-6 text-center">Zentrale Prüfungsinhalte</h2>
+                <p class="text-center text-gray-600 max-w-3xl mx-auto mb-8">Der Prüfungsbereich "Einrichten eines IT-gestützten Arbeitsplatzes" ist handlungsorientiert. Sie müssen Wissen aus verschiedenen Bereichen verknüpfen und auf praxisnahe Szenarien anwenden. Wählen Sie ein Thema, um die Details zu sehen.</p>
+                <div class="bg-white rounded-lg shadow-md">
+                    <div id="tabs-container" class="border-b border-gray-200 flex flex-wrap -mb-px">
+                        <button data-tab="tab1" class="tab-button active-tab text-sm font-medium text-center text-gray-500 border-b-2 border-transparent p-4 rounded-t-lg hover:text-gray-600 hover:border-gray-300">IT-Systeme & Software</button>
+                        <button data-tab="tab2" class="tab-button text-sm font-medium text-center text-gray-500 border-b-2 border-transparent p-4 rounded-t-lg hover:text-gray-600 hover:border-gray-300">Netzwerktechnik</button>
+                        <button data-tab="tab3" class="tab-button text-sm font-medium text-center text-gray-500 border-b-2 border-transparent p-4 rounded-t-lg hover:text-gray-600 hover:border-gray-300">IT-Sicherheit & Datenschutz</button>
+                        <button data-tab="tab4" class="tab-button text-sm font-medium text-center text-gray-500 border-b-2 border-transparent p-4 rounded-t-lg hover:text-gray-600 hover:border-gray-300">Projekt & Wirtschaft</button>
+                    </div>
+                    <div class="p-6 md:p-8">
+                        <div id="tab1" class="tab-content active">
+                            <h3 class="text-xl font-semibold mb-4 text-gray-800">IT-Systeme, Hardware und Software</h3>
+                            <ul class="space-y-3 text-gray-600 list-disc list-inside">
+                                <li>**Hardware-Komponenten:** Beurteilung von CPU, RAM, Motherboard, SSD/HDD und Peripheriegeräten.</li>
+                                <li>**Systemkonfiguration:** Installation von Betriebssystemen, Partitionierung und Formatierung von Datenträgern.</li>
+                                <li>**Speicherlösungen:** Ein zentrales Thema ist der fundierte Vergleich zwischen HDD- und SSD-Technologien.</li>
+                                <li>**Netzwerkanbindung:** Konfiguration von IPv4- und IPv6-Adressen am Client.</li>
+                                <li>**Arbeitsplatz:** Kenntnisse zu Ergonomie und Barrierefreiheit sind gefordert.</li>
+                            </ul>
+                        </div>
+                        <div id="tab2" class="tab-content">
+                            <h3 class="text-xl font-semibold mb-4 text-gray-800">Netzwerktechnik und Administration</h3>
+                            <ul class="space-y-3 text-gray-600 list-disc list-inside">
+                                <li>**Netzwerkkomponenten:** Verständnis von Routern, Switches und Access Points.</li>
+                                <li>**Grundlagen:** Kenntnisse des OSI-Modells und wichtiger Protokolle wie IP, DHCP und VPN.</li>
+                                <li>**Adressierung:** Die Konfiguration von IPv6 ist ein explizit genanntes, neues Detail im Prüfungskatalog.</li>
+                                <li>**Praxisnahe Befehle:** Anwendung von Konsolenbefehlen wie `ipconfig`, `ping`, `traceroute`, `nslookup`, `mkdir` und `cp` zur Analyse und Verwaltung.</li>
+                            </ul>
+                        </div>
+                        <div id="tab3" class="tab-content">
+                            <h3 class="text-xl font-semibold mb-4 text-gray-800">IT-Sicherheit und Datenschutz</h3>
+                            <ul class="space-y-3 text-gray-600 list-disc list-inside">
+                                <li>**Schutzziele:** Erläuterung der drei Kernziele: Vertraulichkeit, Integrität und Verfügbarkeit.</li>
+                                <li>**Moderne Sicherheitskonzepte:** Neu hinzugekommen sind Hashverfahren, Zweifaktorauthentifizierung (2FA) und die Härtung von Betriebssystemen.</li>
+                                <li>**Rechtliche Grundlagen:** Kenntnisse der Datenschutz-Grundverordnung (DSGVO) und technischer/organisatorischer Maßnahmen (TOM).</li>
+                            </ul>
+                        </div>
+                        <div id="tab4" class="tab-content">
+                            <h3 class="text-xl font-semibold mb-4 text-gray-800">Projektmanagement, Kundenbeziehungen und Wirtschaftlichkeit</h3>
+                            <ul class="space-y-3 text-gray-600 list-disc list-inside">
+                                <li>**Projektmanagement-Modelle:** Grundkenntnisse der Modelle Wasserfall und Scrum.</li>
+                                <li>**Kundenberatung:** Durchführung von Bedarfsanalysen und zielgruppengerechte Präsentation von Lösungen.</li>
+                                <li>**Wirtschaftlichkeitsanalyse:** Durchführung von Machbarkeitsanalysen (technisch, wirtschaftlich, rechtlich).</li>
+                                <li>**Beschaffung:** Erstellung und Auswertung von Angebotsvergleichen.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            
+            <!-- Changes Section -->
+            <section id="changes" class="mb-12">
+                <h2 class="text-2xl font-bold text-gray-900 mb-6 text-center">Wichtige Änderungen ab Frühjahr 2025</h2>
+                 <p class="text-center text-gray-600 max-w-3xl mx-auto mb-8">Der Prüfungskatalog wurde aktualisiert. Konzentrieren Sie Ihr Lernen auf die neuen und relevanten Themen und verschwenden Sie keine Zeit mit Inhalten, die gestrichen wurden.</p>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div class="bg-white p-6 rounded-lg shadow-md border-l-4 border-green-500">
+                        <h3 class="text-xl font-semibold text-green-700 mb-4 flex items-center">
+                            <span class="text-2xl mr-3">✓</span> Neu im Katalog
+                        </h3>
+                        <ul class="space-y-2 text-gray-600">
+                            <li><strong>IT-Systeme:</strong> Vergleich HDD vs. SSD, Installation von KI-Software, ERP/SCM/CRM-Systeme.</li>
+                            <li><strong>Netzwerk:</strong> Explizite Nennung der Konfiguration von IPv6.</li>
+                            <li><strong>IT-Sicherheit:</strong> Schutzziele, Hashverfahren, 2FA, Härtung von Betriebssystemen.</li>
+                            <li><strong>Allgemein:</strong> Berechnung von Übertragungsraten, Fehler in Code finden (Schreibtischtest).</li>
+                        </ul>
+                    </div>
+                    <div class="bg-white p-6 rounded-lg shadow-md border-l-4 border-red-500">
+                        <h3 class="text-xl font-semibold text-red-700 mb-4 flex items-center">
+                            <span class="text-2xl mr-3">✗</span> Gestrichene Themen
+                        </h3>
+                        <ul class="space-y-2 text-gray-600">
+                            <li><strong>Hardware:</strong> RAID-Systeme, SAN (Storage Area Network).</li>
+                            <li><strong>Netzwerk:</strong> Mobiler Datenfunk (LTE, 5G).</li>
+                            <li><strong>IT-Sicherheit:</strong> Spezifische ISO-Normen (z.B. 2700x-Reihe).</li>
+                            <li><strong>Sonstiges:</strong> SQL und nicht-relationale Datenbanken (aus AP1 entfernt, weiterhin relevant für die Ausbildung!).</li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Study Strategy Section -->
+            <section id="strategy">
+                <h2 class="text-2xl font-bold text-gray-900 mb-6 text-center">Empfohlene Lernstrategie</h2>
+                 <p class="text-center text-gray-600 max-w-3xl mx-auto mb-8">Eine erfolgreiche Vorbereitung basiert nicht nur auf Fachwissen, sondern auch auf der richtigen Strategie. Hier sind die wichtigsten Tipps und eine Übersicht der relevanten Lernfelder.</p>
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    <div class="bg-white p-6 rounded-lg shadow-md">
+                        <h3 class="text-xl font-semibold text-gray-800 mb-4">Relevante Lernfelder (LF 1-5)</h3>
+                        <div class="space-y-4">
+                            <div class="p-3 bg-gray-50 rounded-md"><strong>LF 1:</strong> Das Unternehmen und die eigene Rolle im Betrieb</div>
+                            <div class="p-3 bg-gray-50 rounded-md"><strong>LF 2:</strong> Arbeitsplätze nach Kundenwunsch ausstatten</div>
+                            <div class="p-3 bg-gray-50 rounded-md"><strong>LF 3:</strong> Clients in Netzwerke einbinden</div>
+                            <div class="p-3 bg-gray-50 rounded-md"><strong>LF 4:</strong> Schutzbedarfsanalyse im eigenen Arbeitsbereich</div>
+                            <div class="p-3 bg-gray-50 rounded-md"><strong>LF 5:</strong> Software zur Verwaltung von Daten anpassen</div>
+                        </div>
+                    </div>
+                    <div class="bg-white p-6 rounded-lg shadow-md">
+                        <h3 class="text-xl font-semibold text-gray-800 mb-4">Top-Tipps für den Erfolg</h3>
+                        <ul class="space-y-3 text-gray-600">
+                            <li class="flex items-start"><span class="text-blue-500 font-bold mr-2">»</span><div><strong>Breites Wissen:</strong> Verstehen Sie viele Themen grundlegend, anstatt Experte in wenigen zu sein.</div></li>
+                            <li class="flex items-start"><span class="text-blue-500 font-bold mr-2">»</span><div><strong>Mit Altprüfungen arbeiten:</strong> Dies ist die effektivste Methode, um den Fragestil der IHK zu verinnerlichen.</div></li>
+                            <li class="flex items-start"><span class="text-blue-500 font-bold mr-2">»</span><div><strong>Basics meistern:</strong> Grundrechenarten, Dreisatz und das Umrechnen von Einheiten sind sichere Punkte.</div></li>
+                            <li class="flex items-start"><span class="text-blue-500 font-bold mr-2">»</span><div><strong>Niemals leer lassen:</strong> Schreiben Sie bei jeder Aufgabe etwas hin. Stichworte oder Lösungsansätze können Teilpunkte bringen.</div></li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+
+        </div>
+    </main>
+
+    <footer class="bg-white mt-12">
+        <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8 text-center text-gray-500 text-sm">
+            <p>&copy; 2025 Interaktiver AP1 Prüfungsguide. Alle Angaben basieren auf dem analysierten Bericht und dienen der Prüfungsvorbereitung.</p>
+        </div>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            
+            const examDate = new Date('2025-09-17T09:00:00').getTime();
+
+            const timerInterval = setInterval(function() {
+                const now = new Date().getTime();
+                const distance = examDate - now;
+
+                if (distance < 0) {
+                    clearInterval(timerInterval);
+                    document.getElementById('timer').innerHTML = "<div class='text-2xl font-bold'>Die Prüfung hat bereits stattgefunden.</div>";
+                    return;
+                }
+
+                const days = Math.floor(distance / (1000 * 60 * 60 * 24));
+                const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+                const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+
+                document.getElementById('days').innerText = days;
+                document.getElementById('hours').innerText = hours;
+                document.getElementById('minutes').innerText = minutes;
+                document.getElementById('seconds').innerText = seconds;
+            }, 1000);
+
+            const ctx = document.getElementById('gradeWeightChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Abschlussprüfung Teil 1', 'Abschlussprüfung Teil 2'],
+                    datasets: [{
+                        label: 'Gewichtung in %',
+                        data: [20, 80],
+                        backgroundColor: [
+                            '#3B82F6', // blue-500
+                            '#D1D5DB'  // gray-300
+                        ],
+                        borderColor: '#FFFFFF',
+                        borderWidth: 4,
+                        hoverOffset: 8
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    cutout: '60%',
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                padding: 20,
+                                font: {
+                                    size: 14,
+                                    family: 'Inter, sans-serif'
+                                }
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    let label = context.label || '';
+                                    if (label) {
+                                        label += ': ';
+                                    }
+                                    if (context.parsed !== null) {
+                                        label += context.parsed + '%';
+                                    }
+                                    return label;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+
+            const tabsContainer = document.getElementById('tabs-container');
+            const tabButtons = tabsContainer.querySelectorAll('.tab-button');
+            const tabContents = document.querySelectorAll('.tab-content');
+
+            tabsContainer.addEventListener('click', (e) => {
+                const clickedTab = e.target.closest('.tab-button');
+                if (!clickedTab) return;
+
+                tabButtons.forEach(button => {
+                    button.classList.remove('active-tab');
+                });
+                clickedTab.classList.add('active-tab');
+
+                tabContents.forEach(content => {
+                    content.classList.remove('active');
+                });
+                
+                const activeContent = document.getElementById(clickedTab.dataset.tab);
+                if (activeContent) {
+                    activeContent.classList.add('active');
+                }
+            });
+        });
+    </script>
+
+</body>
+</html>
